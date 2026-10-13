@@ -145,17 +145,10 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 mb-1">Full Name <span class="text-rose-500">*</span></label>
-                            <input type="text" id="fullname" required placeholder="e.g. Alex Johnson" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-600 focus:border-brand-600 outline-none transition">
-                            <span class="error-msg text-xs text-rose-500 mt-0.5 hidden">Please enter your full name.</span>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 mb-1">Professional Title <span class="text-rose-500">*</span></label>
-                            <input type="text" id="job-title" required placeholder="e.g. Senior Software Engineer" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-600 focus:border-brand-600 outline-none transition">
-                            <span class="error-msg text-xs text-rose-500 mt-0.5 hidden">Please enter your professional title.</span>
-                        </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Full Name <span class="text-rose-500">*</span></label>
+                        <input type="text" id="fullname" required placeholder="e.g. Alex Johnson" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-600 focus:border-brand-600 outline-none transition">
+                        <span class="error-msg text-xs text-rose-500 mt-0.5 hidden">Please enter your full name.</span>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -325,7 +318,6 @@
                     <header class="flex flex-col sm:flex-row justify-between items-start gap-4 border-b border-slate-300 pb-6 mb-6">
                         <div class="space-y-1.5 flex-grow">
                             <h1 id="preview-name" class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Alex Johnson</h1>
-                            <p id="preview-title" class="text-base sm:text-lg font-semibold text-brand-700">Senior Software Engineer</p>
                             <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600 pt-1">
                                 <span id="preview-email-wrap" class="flex items-center gap-1"><i class="fa-regular fa-envelope text-brand-600"></i> <span id="preview-email">alex.johnson@example.com</span></span>
                                 <span id="preview-phone-wrap" class="flex items-center gap-1"><i class="fa-solid fa-phone text-brand-600"></i> <span id="preview-phone">+1 (555) 234-5678</span></span>
@@ -660,7 +652,6 @@
             function updateResumePreview() {
                 // Personal Info
                 const fullname = document.getElementById('fullname').value.trim() || 'Alex Johnson';
-                const jobTitle = document.getElementById('job-title').value.trim() || 'Senior Software Engineer';
                 const email = document.getElementById('email').value.trim() || 'alex.johnson@example.com';
                 const phone = document.getElementById('phone').value.trim() || '+1 (555) 234-5678';
                 const location = document.getElementById('location').value.trim();
@@ -668,7 +659,6 @@
                 const summary = document.getElementById('summary').value.trim();
 
                 document.getElementById('preview-name').textContent = fullname;
-                document.getElementById('preview-title').textContent = jobTitle;
                 
                 // Contact items visibility
                 const emailWrap = document.getElementById('preview-email-wrap');
@@ -873,13 +863,12 @@
 
                 // Validation of required fields
                 const fullnameInput = document.getElementById('fullname');
-                const jobTitleInput = document.getElementById('job-title');
                 const emailInput = document.getElementById('email');
                 const phoneInput = document.getElementById('phone');
 
                 let isValid = true;
 
-                [fullnameInput, jobTitleInput, emailInput, phoneInput].forEach(input => {
+                [fullnameInput, emailInput, phoneInput].forEach(input => {
                     const errorMsg = input.parentElement.querySelector('.error-msg');
                     if (!input.value.trim()) {
                         input.classList.add('border-rose-500');
@@ -953,7 +942,6 @@
                     setTimeout(() => toast.classList.add('hidden'), 4000);
                 } catch (error) {
                     console.error('PDF Generation Error:', error);
-                    // Fallback to window.print if html2canvas encounters cross-origin or rendering issues
                     window.print();
                 } finally {
                     element.style.boxShadow = originalShadow;
@@ -993,7 +981,6 @@
             // Load Sample Data
             loadSampleBtn.addEventListener('click', function () {
                 document.getElementById('fullname').value = 'Alexandra Hayes';
-                document.getElementById('job-title').value = 'Senior Full-Stack Product Engineer';
                 document.getElementById('email').value = 'alexandra.hayes@techcorp.io';
                 document.getElementById('phone').value = '+1 (415) 892-3411';
                 document.getElementById('location').value = 'San Francisco, CA';
