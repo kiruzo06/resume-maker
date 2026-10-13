@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Resume Builder</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- html2canvas and jsPDF for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f6ff',
+                            100: '#e0eefd',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #resume-preview-container, #resume-preview-container * {
+                visibility: visible;
+            }
+            #resume-preview-container {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                box-shadow: none !important;
+                border: none !important;
+                background: white !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            @page {
+                size: A4;
+                margin: 10mm;
+            }
+        }
+
+        /* Custom scrollbar for form and preview */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 font-sans text-slate-800 antialiased min-h-screen flex flex-col">
+
+    <header class="bg-slate-900 text-white shadow-md sticky top-0 z-50 no-print">
+        <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="bg-brand-600 p-2.5 rounded-xl shadow-inner text-white flex items-center justify-center">
+                    <i class="fa-solid fa-file-lines text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight">ResumeForge Pro</h1>
+                    <p class="text-xs text-slate-400">Professional Client-Side Resume & CV Builder</p>
+                </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+                <button type="button" id="load-sample-btn" class="px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg transition border border-slate-700 flex items-center gap-1.5">
+                    <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i> Load Sample Data
+                </button>
+                <button type="button" id="clear-form-btn" class="px-3 py-1.5 text-xs font-medium bg-rose-900/40 hover:bg-rose-900/70 text-rose-200 rounded-lg transition border border-rose-800/50 flex items-center gap-1.5">
+                    <i class="fa-solid fa-trash-can"></i> Clear Form
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-6 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        <!-- Left Column: Form Editor -->
+        <section id="form-section" class="lg:col-span-6 bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-8 no-print">
+            <div class="border-b border-slate-200 pb-4 mb-6">
+                <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-brand-600"></i> Resume Information
+                </h2>
+                <p class="text-xs text-slate-500 mt-1">Fill in the fields below. Changes instantly update your live preview.</p>
+            </div>
+
+            <form id="resume-form" class="space-y-8" novalidate>
+                
+                <!-- SECTION A: Personal Information -->
+                <div class="space-y-4">
+                    <h3 class="text-sm font-semibold text-slate-900 uppercase tracking-wider bg-slate-50 p-2.5 rounded-lg border-l-4 border-brand-600 flex items-center justify-between">
+                        <span>1. Personal Information</span>
+                        <span class="text-xs text-rose-500 font-normal">* Required fields</span>
+                    </h3>
+
+                    <!-- 2x2 Photo Upload -->
+                    <div class="bg-slate-50 p-4 rounded-xl border border-dashed border-slate-300 flex flex-col sm:flex-row items-center gap-4">
+                        <div class="w-24 h-24 bg-slate-200 rounded-lg overflow-hidden flex-shrink-0 border border-slate-300 relative flex items-center justify-center text-slate-400" id="photo-preview-container">
+                            <i class="fa-solid fa-user text-3xl" id="photo-placeholder-icon"></i>
+                            <img id="photo-preview-img" src="" alt="ID Preview" class="w-full h-full object-cover hidden">
+                        </div>
+                        <div class="flex-grow space-y-2 w-full text-center sm:text-left">
+                            <label class="block text-xs font-semibold text-slate-700">Upload 2x2 ID Picture (Optional)</label>
+                            <p class="text-[11px] text-slate-500">Accepts JPG, JPEG, PNG, WEBP (Max 5MB). Automatically formatted to 2"x2" print standard.</p>
+                            <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
+                                <label class="px-3 py-1.5 text-xs font-medium bg-brand-600 hover:bg-brand-700 text-white rounded-lg cursor-pointer transition shadow-sm inline-flex items-center gap-1.5">
+                                    <i class="fa-solid fa-upload"></i> Choose File
+                                    <input type="file" id="photo-input" accept="image/png, image/jpeg, image/jpg, image/webp" class="hidden">
+                                </label>
+                                <button type="button" id="remove-photo-btn" class="px-3 py-1.5 text-xs font-medium bg-white hover:bg-slate-100 text-rose-600 rounded-lg border border-slate-300 transition hidden">
+                                    Remove Photo
+                                </button>
+                            </div>
+                            <span id="photo-error" class="text-xs text-rose-600 block hidden"></span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Full Name <span class="text-rose-500">*</span></label>
+                            <input type="text" id="fullname" required placeholder="e.g. Alex Johnson" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-600 focus:border-brand-600 outline-none transition">
+                            <span class="error-msg text-xs text-rose-500 mt-0.5 hidden">Please enter your full name.</span>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Professional Title <span class="text-rose-500">*</span></label>
+                            <input type="text" id="job-title" required placeholder="e.g. Senior Software Engineer" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-600 focus:border-brand-600 outline-none transition">
+                            <span class="error-msg text-xs text-rose-500 mt-0.5 hidden">Please enter your professional title.</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Email Address <span class="text-rose-500">*</span></label>
+                            <input type="email" id="email" required placeholder="e.g. alex.johnson@example.com" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-600 focus:border-brand-600 outline-none transition">
+                            <span class="error-msg text-xs text-rose-500 mt-0.5 hidden">Please enter a valid email address.</span>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Phone Number <span class="text-rose-500">*</span></label>
+                            <input type="tel" id="phone" required placeholder="e.g. +1 (555) 234-5678" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-600 focus:border-brand-600 outline-none transition">
+                            <span class="error-msg text-xs text-rose-500 mt-0.5 hidden">Please enter your phone number.</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Location / City <span class="text-slate-400 font-normal">(Optional)</span></label>
+                            <input type="text" id="location" placeholder="e.g. San Francisco, CA" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-600 focus:border-brand-600 outline-none transition">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">LinkedIn / Portfolio URL <span class="text-slate-400 font-normal">(Optional)</span></label>
+                            <input type="url" id="website" placeholder="e.g. linkedin.com/in/alexjohnson" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-600 focus:border-brand-600 outline-none transition">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION B: Professional Summary -->
+                <div class="space-y-4">
+                    <h3 class="text-sm font-semibold text-slate-900 uppercase tracking-wider bg-slate-50 p-2.5 rounded-lg border-l-4 border-brand-600">
+                        2. Career Objective / Professional Summary
+                    </h3>
+                    <div>
+                        <textarea id="summary" rows="4" placeholder="Write 2-3 sentences summarizing your professional background, key expertise, and career goals..." class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-600 focus:border-brand-600 outline-none transition"></textarea>
+                    </div>
+                </div>
+
+                <!-- SECTION C: Educational Background -->
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between bg-slate-50 p-2.5 rounded-lg border-l-4 border-brand-600">
+                        <h3 class="text-sm font-semibold text-slate-900 uppercase tracking-wider">3. Educational Background</h3>
+                        <button type="button" id="add-education-btn" class="px-2.5 py-1 text-xs font-medium bg-brand-600 hover:bg-brand-700 text-white rounded-md transition flex items-center gap-1 shadow-sm">
+                            <i class="fa-solid fa-plus"></i> Add Education
+                        </button>
+                    </div>
+                    <div id="education-container" class="space-y-4">
+                        <!-- Dynamic Education Items injected via JS -->
+                    </div>
+                </div>
+
+                <!-- SECTION D: Work Experience -->
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between bg-slate-50 p-2.5 rounded-lg border-l-4 border-brand-600">
+                        <h3 class="text-sm font-semibold text-slate-900 uppercase tracking-wider">4. Work Experience</h3>
+                        <button type="button" id="add-experience-btn" class="px-2.5 py-1 text-xs font-medium bg-brand-600 hover:bg-brand-700 text-white rounded-md transition flex items-center gap-1 shadow-sm">
+                            <i class="fa-solid fa-plus"></i> Add Experience
+                        </button>
+                    </div>
+                    <div id="experience-container" class="space-y-4">
+                        <!-- Dynamic Experience Items injected via JS -->
+                    </div>
+                </div>
+
+                <!-- SECTION E: Skills -->
+                <div class="space-y-4">
+                    <h3 class="text-sm font-semibold text-slate-900 uppercase tracking-wider bg-slate-50 p-2.5 rounded-lg border-l-4 border-brand-600">
+                        5. Skills
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Technical Skills <span class="text-slate-400 font-normal">(Comma separated)</span></label>
+                            <input type="text" id="tech-skills" placeholder="e.g. JavaScript, React, Node.js, Python, SQL" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-600 focus:border-brand-600 outline-none transition">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Soft Skills <span class="text-slate-400 font-normal">(Comma separated)</span></label>
+                            <input type="text" id="soft-skills" placeholder="e.g. Leadership, Agile, Communication, Problem Solving" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-600 focus:border-brand-600 outline-none transition">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION F: Projects and Achievements -->
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between bg-slate-50 p-2.5 rounded-lg border-l-4 border-brand-600">
+                        <h3 class="text-sm font-semibold text-slate-900 uppercase tracking-wider">6. Projects & Achievements</h3>
+                        <button type="button" id="add-project-btn" class="px-2.5 py-1 text-xs font-medium bg-brand-600 hover:bg-brand-700 text-white rounded-md transition flex items-center gap-1 shadow-sm">
+                            <i class="fa-solid fa-plus"></i> Add Project
+                        </button>
+                    </div>
+                    <div id="project-container" class="space-y-4">
+                        <!-- Dynamic Project Items injected via JS -->
+                    </div>
+                </div>
+
+                <!-- SECTION G: Certifications and Training -->
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between bg-slate-50 p-2.5 rounded-lg border-l-4 border-brand-600">
+                        <h3 class="text-sm font-semibold text-slate-900 uppercase tracking-wider">7. Certifications & Training</h3>
+                        <button type="button" id="add-certification-btn" class="px-2.5 py-1 text-xs font-medium bg-brand-600 hover:bg-brand-700 text-white rounded-md transition flex items-center gap-1 shadow-sm">
+                            <i class="fa-solid fa-plus"></i> Add Certification
+                        </button>
+                    </div>
+                    <div id="certification-container" class="space-y-4">
+                        <!-- Dynamic Certification Items injected via JS -->
+                    </div>
+                </div>
+
+                <!-- SECTION H: Additional Information -->
+                <div class="space-y-4">
+                    <h3 class="text-sm font-semibold text-slate-900 uppercase tracking-wider bg-slate-50 p-2.5 rounded-lg border-l-4 border-brand-600">
+                        8. Additional Information <span class="text-slate-400 font-normal">(Optional)</span>
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Languages Spoken</label>
+                            <input type="text" id="languages" placeholder="e.g. English (Native), Spanish (Fluent)" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-600 focus:border-brand-600 outline-none transition">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Volunteer Experience</label>
+                            <input type="text" id="volunteer" placeholder="e.g. Codecademy Mentor, Red Cross Volunteer" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-600 focus:border-brand-600 outline-none transition">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Action Buttons -->
+                <div class="pt-4 border-t border-slate-200 flex flex-wrap items-center gap-3">
+                    <button type="submit" id="generate-btn" class="flex-1 bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 px-4 rounded-xl shadow transition flex items-center justify-center gap-2 text-sm">
+                        <i class="fa-solid fa-bolt"></i> Generate Resume
+                    </button>
+                </div>
+
+            </form>
+        </section>
+
+        <!-- Right Column: Live Resume Preview & Export Controls -->
+        <section class="lg:col-span-6 sticky top-24 space-y-4">
+            
+            <!-- Preview Action Bar -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-3 flex flex-wrap items-center justify-between gap-2 no-print">
+                <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
+                    <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">Live Preview</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <button type="button" id="print-resume-btn" class="px-3 py-1.5 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition flex items-center gap-1.5 shadow-sm">
+                        <i class="fa-solid fa-print"></i> Print Resume
+                    </button>
+                    <button type="button" id="download-pdf-btn" class="px-3 py-1.5 text-xs font-semibold bg-brand-600 hover:bg-brand-700 text-white rounded-lg transition flex items-center gap-1.5 shadow-sm">
+                        <i class="fa-solid fa-file-pdf"></i> Download PDF
+                    </button>
+                </div>
+            </div>
+
+            <!-- Notification Banner -->
+            <div id="toast-notification" class="hidden bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-xl text-xs flex items-center justify-between shadow-sm no-print">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+                    <span id="toast-message">Resume successfully generated and updated!</span>
+                </div>
+                <button type="button" onclick="document.getElementById('toast-notification').classList.add('hidden')" class="text-emerald-700 hover:text-emerald-900 font-bold">×</button>
+            </div>
+
+            <!-- Resume Canvas Paper (A4 proportions simulation) -->
+            <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden relative transition-all duration-300">
+                <div id="resume-preview-container" class="p-8 sm:p-12 bg-white text-slate-800 font-sans min-h-[842px] max-w-[210mm] mx-auto text-sm leading-normal">
+                    
+                    <!-- Resume Header -->
+                    <header class="flex flex-col sm:flex-row justify-between items-start gap-4 border-b border-slate-300 pb-6 mb-6">
+                        <div class="space-y-1.5 flex-grow">
+                            <h1 id="preview-name" class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Alex Johnson</h1>
+                            <p id="preview-title" class="text-base sm:text-lg font-semibold text-brand-700">Senior Software Engineer</p>
+                            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600 pt-1">
+                                <span id="preview-email-wrap" class="flex items-center gap-1"><i class="fa-regular fa-envelope text-brand-600"></i> <span id="preview-email">alex.johnson@example.com</span></span>
+                                <span id="preview-phone-wrap" class="flex items-center gap-1"><i class="fa-solid fa-phone text-brand-600"></i> <span id="preview-phone">+1 (555) 234-5678</span></span>
+                                <span id="preview-location-wrap" class="flex items-center gap-1"><i class="fa-solid fa-location-dot text-brand-600"></i> <span id="preview-location">San Francisco, CA</span></span>
+                                <span id="preview-website-wrap" class="flex items-center gap-1"><i class="fa-solid fa-globe text-brand-600"></i> <span id="preview-website">linkedin.com/in/alexjohnson</span></span>
+                            </div>
+                        </div>
+                        <!-- 2x2 ID Picture in Header Upper-Right -->
+                        <div id="preview-photo-box" class="flex-shrink-0 hidden">
+                            <img id="preview-photo-img" src="" alt="Applicant ID" style="width: 2in; height: 2in; object-fit: cover;" class="rounded shadow-sm border border-slate-300">
+                        </div>
+                    </header>
+
+                    <!-- Professional Summary Section -->
+                    <section id="preview-summary-section" class="mb-6">
+                        <h2 class="text-xs font-bold uppercase tracking-widest text-slate-900 border-b-2 border-slate-900 pb-1 mb-2">Professional Summary</h2>
+                        <p id="preview-summary" class="text-slate-700 text-xs sm:text-sm whitespace-pre-line leading-relaxed">Results-driven software engineer with over 6 years of experience designing, developing, and deploying scalable web applications and distributed systems. Expert in modern JavaScript frameworks, cloud infrastructure, and agile software development life cycles.</p>
+                    </section>
+
+                    <!-- Work Experience Section -->
+                    <section id="preview-experience-section" class="mb-6">
+                        <h2 class="text-xs font-bold uppercase tracking-widest text-slate-900 border-b-2 border-slate-900 pb-1 mb-3">Work Experience</h2>
+                        <div id="preview-experience-list" class="space-y-4">
+                            <!-- Injected Experience items -->
+                        </div>
+                    </section>
+
+                    <!-- Educational Background Section -->
+                    <section id="preview-education-section" class="mb-6">
+                        <h2 class="text-xs font-bold uppercase tracking-widest text-slate-900 border-b-2 border-slate-900 pb-1 mb-3">Educational Background</h2>
+                        <div id="preview-education-list" class="space-y-3">
+                            <!-- Injected Education items -->
+                        </div>
+                    </section>
+
+                    <!-- Skills Section -->
+                    <section id="preview-skills-section" class="mb-6">
+                        <h2 class="text-xs font-bold uppercase tracking-widest text-slate-900 border-b-2 border-slate-900 pb-1 mb-2">Skills</h2>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                            <div id="preview-tech-skills-wrap"><span class="font-semibold text-slate-900">Technical:</span> <span id="preview-tech-skills" class="text-slate-700">JavaScript, React, Node.js, Python, SQL, Git</span></div>
+                            <div id="preview-soft-skills-wrap"><span class="font-semibold text-slate-900">Soft Skills:</span> <span id="preview-soft-skills" class="text-slate-700">Team Leadership, Agile Methodologies, Cross-functional Communication</span></div>
+                        </div>
+                    </section>
+
+                    <!-- Projects & Achievements Section -->
+                    <section id="preview-project-section" class="mb-6">
+                        <h2 class="text-xs font-bold uppercase tracking-widest text-slate-900 border-b-2 border-slate-900 pb-1 mb-3">Projects & Achievements</h2>
+                        <div id="preview-project-list" class="space-y-3">
+                            <!-- Injected Project items -->
+                        </div>
+                    </section>
+
+                    <!-- Certifications Section -->
+                    <section id="preview-certification-section" class="mb-6">
+                        <h2 class="text-xs font-bold uppercase tracking-widest text-slate-900 border-b-2 border-slate-900 pb-1 mb-3">Certifications & Training</h2>
+                        <div id="preview-certification-list" class="space-y-2">
+                            <!-- Injected Certifications -->
+                        </div>
+                    </section>
+
+                    <!-- Additional Information Section -->
+                    <section id="preview-additional-section" class="mb-4">
+                        <h2 class="text-xs font-bold uppercase tracking-widest text-slate-900 border-b-2 border-slate-900 pb-1 mb-2">Additional Information</h2>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                            <div id="preview-languages-wrap"><span class="font-semibold text-slate-900">Languages:</span> <span id="preview-languages" class="text-slate-700">English (Native), Spanish (Conversational)</span></div>
+                            <div id="preview-volunteer-wrap"><span class="font-semibold text-slate-900">Volunteer:</span> <span id="preview-volunteer" class="text-slate-700">Open Source Contributor</span></div>
+                        </div>
+                    </section>
+
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // State variables for repeatable items
+            let educationCount = 0;
+            let experienceCount = 0;
+            let projectCount = 0;
+            let certificationCount = 0;
+            let uploadedPhotoBase64 = null;
+
+            // DOM Elements
+            const form = document.getElementById('resume-form');
+            const generateBtn = document.getElementById('generate-btn');
+            const printBtn = document.getElementById('print-resume-btn');
+            const downloadPdfBtn = document.getElementById('download-pdf-btn');
+            const clearBtn = document.getElementById('clear-form-btn');
+            const loadSampleBtn = document.getElementById('load-sample-btn');
+            const toast = document.getElementById('toast-notification');
+            const toastMessage = document.getElementById('toast-message');
+
+            // Photo elements
+            const photoInput = document.getElementById('photo-input');
+            const photoPreviewImg = document.getElementById('photo-preview-img');
+            const photoPlaceholderIcon = document.getElementById('photo-placeholder-icon');
+            const removePhotoBtn = document.getElementById('remove-photo-btn');
+            const photoError = document.getElementById('photo-error');
+            const previewPhotoBox = document.getElementById('preview-photo-box');
+            const previewPhotoImg = document.getElementById('preview-photo-img');
+
+            // Helper function to escape HTML to prevent injection
+            function escapeHTML(str) {
+                if (!str) return '';
+                return str.replace(/[&<>'"]/g, 
+                    tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+                );
+            }
+
+            // Photo upload handling
+            photoInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                // Validate type
+                const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+                if (!validTypes.includes(file.type)) {
+                    photoError.textContent = 'Invalid file type. Please upload JPG, PNG, or WEBP.';
+                    photoError.classList.remove('hidden');
+                    return;
+                }
+
+                // Validate size (5MB max)
+                if (file.size > 5 * 1024 * 1024) {
+                    photoError.textContent = 'File is too large. Maximum size is 5MB.';
+                    photoError.classList.remove('hidden');
+                    return;
+                }
+
+                photoError.classList.add('hidden');
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    uploadedPhotoBase64 = event.target.result;
+                    photoPreviewImg.src = uploadedPhotoBase64;
+                    photoPreviewImg.classList.remove('hidden');
+                    photoPlaceholderIcon.classList.add('hidden');
+                    removePhotoBtn.classList.remove('hidden');
+
+                    previewPhotoImg.src = uploadedPhotoBase64;
+                    previewPhotoBox.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            });
+
+            removePhotoBtn.addEventListener('click', function() {
+                photoInput.value = '';
+                uploadedPhotoBase64 = null;
+                photoPreviewImg.src = '';
+                photoPreviewImg.classList.add('hidden');
+                photoPlaceholderIcon.classList.remove('hidden');
+                removePhotoBtn.classList.add('hidden');
+                photoError.classList.add('hidden');
+
+                previewPhotoImg.src = '';
+                previewPhotoBox.classList.add('hidden');
+            });
+
+            // Dynamic Section: Education
+            function addEducationItem(data = {}) {
+                educationCount++;
+                const id = educationCount;
+                const container = document.getElementById('education-container');
+                const div = document.createElement('div');
+                div.className = 'education-item bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 relative';
+                div.dataset.id = id;
+                div.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-slate-700">Education #${id}</span>
+                        <button type="button" class="remove-edu text-rose-500 hover:text-rose-700 text-xs font-semibold flex items-center gap-1">
+                            <i class="fa-solid fa-trash"></i> Remove
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-700 mb-1">School / University</label>
+                            <input type="text" class="edu-school w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg outline-none focus:border-brand-600" value="${escapeHTML(data.school || '')}" placeholder="e.g. Stanford University">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-700 mb-1">Degree / Program</label>
+                            <input type="text" class="edu-degree w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg outline-none focus:border-brand-600" value="${escapeHTML(data.degree || '')}" placeholder="e.g. B.S. in Computer Science">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-700 mb-1">Years Attended</label>
+                            <input type="text" class="edu-years w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg outline-none focus:border-brand-600" value="${escapeHTML(data.years || '')}" placeholder="e.g. 2016 - 2020">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-700 mb-1">Awards / Honors (Optional)</label>
+                            <input type="text" class="edu-awards w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg outline-none focus:border-brand-600" value="${escapeHTML(data.awards || '')}" placeholder="e.g. Summa Cum Laude">
+                        </div>
+                    </div>
+                `;
+                div.querySelector('.remove-edu').addEventListener('click', () => {
+                    div.remove();
+                    updateResumePreview();
+                });
+                div.querySelectorAll('input').forEach(input => input.addEventListener('input', updateResumePreview));
+                container.appendChild(div);
+                updateResumePreview();
+            }
+
+            // Dynamic Section: Experience
+            function addExperienceItem(data = {}) {
+                experienceCount++;
+                const id = experienceCount;
+                const container = document.getElementById('experience-container');
+                const div = document.createElement('div');
+                div.className = 'experience-item bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 relative';
+                div.dataset.id = id;
+                div.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-slate-700">Experience #${id}</span>
+                        <button type="button" class="remove-exp text-rose-500 hover:text-rose-700 text-xs font-semibold flex items-center gap-1">
+                            <i class="fa-solid fa-trash"></i> Remove
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-700 mb-1">Job Title</label>
+                            <input type="text" class="exp-title w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg outline-none focus:border-brand-600" value="${escapeHTML(data.title || '')}" placeholder="e.g. Software Engineer">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-700 mb-1">Company / Organization</label>
+                            <input type="text" class="exp-company w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg outline-none focus:border-brand-600" value="${escapeHTML(data.company || '')}" placeholder="e.g. Google">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-700 mb-1">Employment Dates</label>
+                            <input type="text" class="exp-dates w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg outline-none focus:border-brand-600" value="${escapeHTML(data.dates || '')}" placeholder="e.g. Jan 2021 - Present">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">Responsibilities & Achievements</label>
+                        <textarea class="exp-desc w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg outline-none focus:border-brand-600" rows="3" placeholder="Describe your key duties and accomplishments (supports bullet formatting)">${escapeHTML(data.desc || '')}</textarea>
+                    </div>
+                `;
+                div.querySelector('.remove-exp').addEventListener('click', () => {
+                    div.remove();
+                    updateResumePreview();
+                });
+                div.querySelectorAll('input, textarea').forEach(el => el.addEventListener('input', updateResumePreview));
+                container.appendChild(div);
+                updateResumePreview();
+            }
+
+            // Dynamic Section: Project
+            function addProjectItem(data = {}) {
+                projectCount++;
+                const id = projectCount;
+                const container = document.getElementById('project-container');
+                const div = document.createElement('div');
+                div.className = 'project-item bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 relative';
+                div.dataset.id = id;
+                div.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-slate-700">Project #${id}</span>
+                        <button type="button" class="remove-proj text-rose-500 hover:text-rose-700 text-xs font-semibold flex items-center gap-1">
+                            <i class="fa-solid fa-trash"></i> Remove
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-700 mb-1">Project Title</label>
+                            <input type="text" class="proj-title w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg outline-none focus:border-brand-600" value="${escapeHTML(data.title || '')}" placeholder="e.g. E-Commerce Platform">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-700 mb-1">Role / Contribution</label>
+                            <input type="text" class="proj-role w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg outline-none focus:border-brand-600" value="${escapeHTML(data.role || '')}" placeholder="e.g. Lead Full-Stack Developer">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">Description</label>
+                        <textarea class="proj-desc w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg outline-none focus:border-brand-600" rows="2" placeholder="Briefly describe the project and technologies used">${escapeHTML(data.desc || '')}</textarea>
+                    </div>
+                `;
+                div.querySelector('.remove-proj').addEventListener('click', () => {
+                    div.remove();
+                    updateResumePreview();
+                });
+                div.querySelectorAll('input, textarea').forEach(el => el.addEventListener('input', updateResumePreview));
+                container.appendChild(div);
+                updateResumePreview();
+            }
+
+            // Dynamic Section: Certification
+            function addCertificationItem(data = {}) {
+                certificationCount++;
+                const id = certificationCount;
+                const container = document.getElementById('certification-container');
+                const div = document.createElement('div');
+                div.className = 'certification-item bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 relative';
+                div.dataset.id = id;
+                div.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-slate-700">Certification #${id}</span>
+                        <button type="button" class="remove-cert text-rose-500 hover:text-rose-700 text-xs font-semibold flex items-center gap-1">
+                            <i class="fa-solid fa-trash"></i> Remove
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-700 mb-1">Certification Title</label>
+                            <input type="text" class="cert-title w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg outline-none focus:border-brand-600" value="${escapeHTML(data.title || '')}" placeholder="e.g. AWS Certified Solutions Architect">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-700 mb-1">Issuing Organization / Date</label>
+                            <input type="text" class="cert-org w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg outline-none focus:border-brand-600" value="${escapeHTML(data.org || '')}" placeholder="e.g. Amazon Web Services, 2023">
+                        </div>
+                    </div>
+                `;
+                div.querySelector('.remove-cert').addEventListener('click', () => {
+                    div.remove();
+                    updateResumePreview();
+                });
+                div.querySelectorAll('input').forEach(input => input.addEventListener('input', updateResumePreview));
+                container.appendChild(div);
+                updateResumePreview();
+            }
+
+            // Event Listeners for adding items
+            document.getElementById('add-education-btn').addEventListener('click', () => addEducationItem());
+            document.getElementById('add-experience-btn').addEventListener('click', () => addExperienceItem());
+            document.getElementById('add-project-btn').addEventListener('click', () => addProjectItem());
+            document.getElementById('add-certification-btn').addEventListener('click', () => addCertificationItem());
+
+            // Live Update & Render Function
+            function updateResumePreview() {
+                // Personal Info
+                const fullname = document.getElementById('fullname').value.trim() || 'Alex Johnson';
+                const jobTitle = document.getElementById('job-title').value.trim() || 'Senior Software Engineer';
+                const email = document.getElementById('email').value.trim() || 'alex.johnson@example.com';
+                const phone = document.getElementById('phone').value.trim() || '+1 (555) 234-5678';
+                const location = document.getElementById('location').value.trim();
+                const website = document.getElementById('website').value.trim();
+                const summary = document.getElementById('summary').value.trim();
+
+                document.getElementById('preview-name').textContent = fullname;
+                document.getElementById('preview-title').textContent = jobTitle;
+                
+                // Contact items visibility
+                const emailWrap = document.getElementById('preview-email-wrap');
+                if (email) { document.getElementById('preview-email').textContent = email; emailWrap.classList.remove('hidden'); } else { emailWrap.classList.add('hidden'); }
+
+                const phoneWrap = document.getElementById('preview-phone-wrap');
+                if (phone) { document.getElementById('preview-phone').textContent = phone; phoneWrap.classList.remove('hidden'); } else { phoneWrap.classList.add('hidden'); }
+
+                const locWrap = document.getElementById('preview-location-wrap');
+                if (location) { document.getElementById('preview-location').textContent = location; locWrap.classList.remove('hidden'); } else { locWrap.classList.add('hidden'); }
+
+                const webWrap = document.getElementById('preview-website-wrap');
+                if (website) { document.getElementById('preview-website').textContent = website; webWrap.classList.remove('hidden'); } else { webWrap.classList.add('hidden'); }
+
+                // Summary
+                const summarySection = document.getElementById('preview-summary-section');
+                if (summary) {
+                    document.getElementById('preview-summary').textContent = summary;
+                    summarySection.classList.remove('hidden');
+                } else {
+                    summarySection.classList.add('hidden');
+                }
+
+                // Experience List
+                const expContainer = document.getElementById('preview-experience-list');
+                expContainer.innerHTML = '';
+                const expItems = document.querySelectorAll('.experience-item');
+                const expSection = document.getElementById('preview-experience-section');
+                if (expItems.length > 0) {
+                    let hasContent = false;
+                    expItems.forEach(item => {
+                        const title = item.querySelector('.exp-title').value.trim();
+                        const company = item.querySelector('.exp-company').value.trim();
+                        const dates = item.querySelector('.exp-dates').value.trim();
+                        const desc = item.querySelector('.exp-desc').value.trim();
+
+                        if (title || company || desc) {
+                            hasContent = true;
+                            const div = document.createElement('div');
+                            div.className = 'space-y-1';
+                            div.innerHTML = `
+                                <div class="flex justify-between items-baseline">
+                                    <h3 class="font-bold text-slate-900 text-xs sm:text-sm">${escapeHTML(title)}${company ? ' — <span class="font-medium text-slate-700">' + escapeHTML(company) + '</span>' : ''}</h3>
+                                    <span class="text-[11px] font-medium text-slate-500">${escapeHTML(dates)}</span>
+                                </div>
+                                <p class="text-slate-700 text-xs whitespace-pre-line leading-relaxed">${escapeHTML(desc)}</p>
+                            `;
+                            expContainer.appendChild(div);
+                        }
+                    });
+                    expSection.style.display = hasContent ? 'block' : 'none';
+                } else {
+                    expSection.style.display = 'none';
+                }
+
+                // Education List
+                const eduContainer = document.getElementById('preview-education-list');
+                eduContainer.innerHTML = '';
+                const eduItems = document.querySelectorAll('.education-item');
+                const eduSection = document.getElementById('preview-education-section');
+                if (eduItems.length > 0) {
+                    let hasContent = false;
+                    eduItems.forEach(item => {
+                        const school = item.querySelector('.edu-school').value.trim();
+                        const degree = item.querySelector('.edu-degree').value.trim();
+                        const years = item.querySelector('.edu-years').value.trim();
+                        const awards = item.querySelector('.edu-awards').value.trim();
+
+                        if (school || degree) {
+                            hasContent = true;
+                            const div = document.createElement('div');
+                            div.className = 'flex justify-between items-start text-xs';
+                            div.innerHTML = `
+                                <div>
+                                    <p class="font-bold text-slate-900">${escapeHTML(degree)}${school ? ' — ' + escapeHTML(school) : ''}</p>
+                                    ${awards ? '<p class="text-slate-600 italic">Honors: ' + escapeHTML(awards) + '</p>' : ''}
+                                </div>
+                                <span class="font-medium text-slate-500 flex-shrink-0">${escapeHTML(years)}</span>
+                            `;
+                            eduContainer.appendChild(div);
+                        }
+                    });
+                    eduSection.style.display = hasContent ? 'block' : 'none';
+                } else {
+                    eduSection.style.display = 'none';
+                }
+
+                // Skills
+                const techSkills = document.getElementById('tech-skills').value.trim();
+                const softSkills = document.getElementById('soft-skills').value.trim();
+                const skillsSection = document.getElementById('preview-skills-section');
+                const techWrap = document.getElementById('preview-tech-skills-wrap');
+                const softWrap = document.getElementById('preview-soft-skills-wrap');
+
+                if (techSkills || softSkills) {
+                    skillsSection.style.display = 'block';
+                    if (techSkills) {
+                        document.getElementById('preview-tech-skills').textContent = techSkills;
+                        techWrap.style.display = 'block';
+                    } else {
+                        techWrap.style.display = 'none';
+                    }
+                    if (softSkills) {
+                        document.getElementById('preview-soft-skills').textContent = softSkills;
+                        softWrap.style.display = 'block';
+                    } else {
+                        softWrap.style.display = 'none';
+                    }
+                } else {
+                    skillsSection.style.display = 'none';
+                }
+
+                // Projects List
+                const projContainer = document.getElementById('preview-project-list');
+                projContainer.innerHTML = '';
+                const projItems = document.querySelectorAll('.project-item');
+                const projSection = document.getElementById('preview-project-section');
+                if (projItems.length > 0) {
+                    let hasContent = false;
+                    projItems.forEach(item => {
+                        const title = item.querySelector('.proj-title').value.trim();
+                        const role = item.querySelector('.proj-role').value.trim();
+                        const desc = item.querySelector('.proj-desc').value.trim();
+
+                        if (title || desc) {
+                            hasContent = true;
+                            const div = document.createElement('div');
+                            div.className = 'space-y-0.5 text-xs';
+                            div.innerHTML = `
+                                <p class="font-bold text-slate-900">${escapeHTML(title)}${role ? ' <span class="font-normal text-slate-600">(' + escapeHTML(role) + ')</span>' : ''}</p>
+                                <p class="text-slate-700 leading-relaxed">${escapeHTML(desc)}</p>
+                            `;
+                            projContainer.appendChild(div);
+                        }
+                    });
+                    projSection.style.display = hasContent ? 'block' : 'none';
+                } else {
+                    projSection.style.display = 'none';
+                }
+
+                // Certifications List
+                const certContainer = document.getElementById('preview-certification-list');
+                certContainer.innerHTML = '';
+                const certItems = document.querySelectorAll('.certification-item');
+                const certSection = document.getElementById('preview-certification-section');
+                if (certItems.length > 0) {
+                    let hasContent = false;
+                    certItems.forEach(item => {
+                        const title = item.querySelector('.cert-title').value.trim();
+                        const org = item.querySelector('.cert-org').value.trim();
+
+                        if (title || org) {
+                            hasContent = true;
+                            const div = document.createElement('div');
+                            div.className = 'text-xs flex justify-between';
+                            div.innerHTML = `
+                                <span class="font-bold text-slate-900">${escapeHTML(title)}</span>
+                                <span class="text-slate-600">${escapeHTML(org)}</span>
+                            `;
+                            certContainer.appendChild(div);
+                        }
+                    });
+                    certSection.style.display = hasContent ? 'block' : 'none';
+                } else {
+                    certSection.style.display = 'none';
+                }
+
+                // Additional Info
+                const languages = document.getElementById('languages').value.trim();
+                const volunteer = document.getElementById('volunteer').value.trim();
+                const addSection = document.getElementById('preview-additional-section');
+                const langWrap = document.getElementById('preview-languages-wrap');
+                const volWrap = document.getElementById('preview-volunteer-wrap');
+
+                if (languages || volunteer) {
+                    addSection.style.display = 'block';
+                    if (languages) {
+                        document.getElementById('preview-languages').textContent = languages;
+                        langWrap.style.display = 'block';
+                    } else {
+                        langWrap.style.display = 'none';
+                    }
+                    if (volunteer) {
+                        document.getElementById('preview-volunteer').textContent = volunteer;
+                        volWrap.style.display = 'block';
+                    } else {
+                        volWrap.style.display = 'none';
+                    }
+                } else {
+                    addSection.style.display = 'none';
+                }
+            }
+
+            // Input live listeners on static form fields
+            form.querySelectorAll('input:not([type="file"]), textarea').forEach(input => {
+                input.addEventListener('input', updateResumePreview);
+            });
+
+            // Form Submit / Generate Button Handler
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                // Validation of required fields
+                const fullnameInput = document.getElementById('fullname');
+                const jobTitleInput = document.getElementById('job-title');
+                const emailInput = document.getElementById('email');
+                const phoneInput = document.getElementById('phone');
+
+                let isValid = true;
+
+                [fullnameInput, jobTitleInput, emailInput, phoneInput].forEach(input => {
+                    const errorMsg = input.parentElement.querySelector('.error-msg');
+                    if (!input.value.trim()) {
+                        input.classList.add('border-rose-500');
+                        if (errorMsg) errorMsg.classList.remove('hidden');
+                        isValid = false;
+                    } else {
+                        input.classList.remove('border-rose-500');
+                        if (errorMsg) errorMsg.classList.add('hidden');
+                    }
+                });
+
+                if (!isValid) {
+                    // Scroll to top of form
+                    form.scrollIntoView({ behavior: 'smooth' });
+                    return;
+                }
+
+                updateResumePreview();
+                toastMessage.textContent = 'Resume generated successfully and is ready for export!';
+                toast.classList.remove('hidden');
+                setTimeout(() => toast.classList.add('hidden'), 5000);
+            });
+
+            // Print Resume
+            printBtn.addEventListener('click', function () {
+                window.print();
+            });
+
+            // Download PDF using html2canvas & jsPDF
+            downloadPdfBtn.addEventListener('click', async function () {
+                const element = document.getElementById('resume-preview-container');
+                
+                // Temporarily adjust styling for optimal PDF rendering
+                const originalShadow = element.style.boxShadow;
+                element.style.boxShadow = 'none';
+
+                try {
+                    const canvas = await html2canvas(element, {
+                        scale: 2,
+                        useCORS: true,
+                        logging: false
+                    });
+
+                    const imgData = canvas.toDataURL('image/png');
+                    const { jsPDF } = window.jspdf;
+                    const pdf = new jsPDF('p', 'mm', 'a4');
+                    
+                    const pageWidth = pdf.internal.pageSize.getWidth();
+                    const pageHeight = pdf.internal.pageSize.getHeight();
+                    
+                    const imgWidth = pageWidth;
+                    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                    
+                    let heightLeft = imgHeight;
+                    let position = 0;
+
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+
+                    while (heightLeft >= 0) {
+                        position = heightLeft - imgHeight;
+                        pdf.addPage();
+                        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                        heightLeft -= pageHeight;
+                    }
+
+                    pdf.save('Professional_Resume.pdf');
+
+                    toastMessage.textContent = 'PDF downloaded successfully!';
+                    toast.classList.remove('hidden');
+                    setTimeout(() => toast.classList.add('hidden'), 4000);
+                } catch (error) {
+                    console.error('PDF Generation Error:', error);
+                    // Fallback to window.print if html2canvas encounters cross-origin or rendering issues
+                    window.print();
+                } finally {
+                    element.style.boxShadow = originalShadow;
+                }
+            });
+
+            // Clear Form Confirmation
+            clearBtn.addEventListener('click', function () {
+                if (confirm('Are you sure you want to clear all form entries? This action cannot be undone.')) {
+                    form.reset();
+                    document.getElementById('education-container').innerHTML = '';
+                    document.getElementById('experience-container').innerHTML = '';
+                    document.getElementById('project-container').innerHTML = '';
+                    document.getElementById('certification-container').innerHTML = '';
+                    educationCount = 0;
+                    experienceCount = 0;
+                    projectCount = 0;
+                    certificationCount = 0;
+
+                    // Clear photo
+                    uploadedPhotoBase64 = null;
+                    photoPreviewImg.src = '';
+                    photoPreviewImg.classList.add('hidden');
+                    photoPlaceholderIcon.classList.remove('hidden');
+                    removePhotoBtn.classList.add('hidden');
+                    photoError.classList.add('hidden');
+                    previewPhotoImg.src = '';
+                    previewPhotoBox.classList.add('hidden');
+
+                    updateResumePreview();
+                    toastMessage.textContent = 'Form data cleared successfully.';
+                    toast.classList.remove('hidden');
+                    setTimeout(() => toast.classList.add('hidden'), 4000);
+                }
+            });
+
+            // Load Sample Data
+            loadSampleBtn.addEventListener('click', function () {
+                document.getElementById('fullname').value = 'Alexandra Hayes';
+                document.getElementById('job-title').value = 'Senior Full-Stack Product Engineer';
+                document.getElementById('email').value = 'alexandra.hayes@techcorp.io';
+                document.getElementById('phone').value = '+1 (415) 892-3411';
+                document.getElementById('location').value = 'San Francisco, CA';
+                document.getElementById('website').value = 'github.com/alexandrahayes';
+                document.getElementById('summary').value = 'Innovative Full-Stack Software Engineer with 7+ years of experience architecting high-performance web applications, leading technical teams, and scaling microservices on AWS. Passionate about clean code, developer tooling, and exceptional user experiences.';
+                document.getElementById('tech-skills').value = 'JavaScript, TypeScript, React, Node.js, Python, PostgreSQL, Docker, AWS, GraphQL';
+                document.getElementById('soft-skills').value = 'Technical Leadership, Agile Scrum, Cross-Functional Collaboration, Problem Solving';
+                document.getElementById('languages').value = 'English (Native), French (Conversational)';
+                document.getElementById('volunteer').value = 'Mentor at CodePath & Open Source Maintainer';
+
+                // Clear and load dynamic sections
+                document.getElementById('education-container').innerHTML = '';
+                document.getElementById('experience-container').innerHTML = '';
+                document.getElementById('project-container').innerHTML = '';
+                document.getElementById('certification-container').innerHTML = '';
+                educationCount = 0;
+                experienceCount = 0;
+                projectCount = 0;
+                certificationCount = 0;
+
+                addEducationItem({
+                    school: 'University of California, Berkeley',
+                    degree: 'B.S. in Electrical Engineering & Computer Sciences',
+                    years: '2015 - 2019',
+                    awards: 'Dean Honors List, EECS Department Scholar'
+                });
+
+                addExperienceItem({
+                    title: 'Senior Frontend Engineer',
+                    company: 'Stellar Cloud Systems',
+                    dates: '2021 - Present',
+                    desc: '• Spearheaded migration of legacy monolith frontend to a modular React and TypeScript architecture, reducing load time by 42%.\n• Mentored 6 junior engineers and established robust code review guidelines.\n• Collaborated closely with UI/UX designers to implement accessible design tokens.'
+                });
+
+                addExperienceItem({
+                    title: 'Software Engineer',
+                    company: 'Apex Digital Solutions',
+                    dates: '2019 - 2021',
+                    desc: '• Developed and maintained RESTful microservices using Node.js and PostgreSQL.\n• Optimized database query performance, reducing server response times by 30%.'
+                });
+
+                addProjectItem({
+                    title: 'DevFlow Analytics Dashboard',
+                    role: 'Creator & Lead Architect',
+                    desc: 'Engineered a real-time developer productivity analytics platform utilizing React, Tailwind CSS, and WebSockets.'
+                });
+
+                addCertificationItem({
+                    title: 'AWS Certified Solutions Architect – Associate',
+                    org: 'Amazon Web Services, 2022'
+                });
+
+                updateResumePreview();
+                toastMessage.textContent = 'Sample professional data loaded successfully!';
+                toast.classList.remove('hidden');
+                setTimeout(() => toast.classList.add('hidden'), 4000);
+            });
+
+            // Initial load populate with one empty entry per repeatable section for convenience
+            addEducationItem({
+                school: 'Stanford University',
+                degree: 'B.S. Computer Science',
+                years: '2017 - 2021',
+                awards: 'Magna Cum Laude'
+            });
+
+            addExperienceItem({
+                title: 'Software Engineer',
+                company: 'Tech Innovations Inc.',
+                dates: '2021 - Present',
+                desc: '• Developed responsive web applications using modern JavaScript and React.\n• Optimized API request payloads resulting in a 25% decrease in latency.'
+            });
+
+            addProjectItem({
+                title: 'AI Resume Analyzer',
+                role: 'Full-Stack Developer',
+                desc: 'Built a tool parsing resume text with NLP to match candidate keywords against job descriptions.'
+            });
+
+            addCertificationItem({
+                title: 'Certified Kubernetes Application Developer (CKAD)',
+                org: 'Linux Foundation, 2023'
+            });
+
+            updateResumePreview();
+        });
+    </script>
+</body>
+</html>
